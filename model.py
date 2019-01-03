@@ -44,9 +44,9 @@ class Model(object):
         self.dropout = tf.placeholder(dtype=tf.float32,
                                       name="Dropout")
 
-        used = tf.sign(tf.abs(self.char_inputs))
-        length = tf.reduce_sum(used, reduction_indices=1)
-        self.lengths = tf.cast(length, tf.int32)
+        used = tf.sign(tf.abs(self.char_inputs))#将数据转化为1和0（填充的值都为0）
+        length = tf.reduce_sum(used, reduction_indices=1) #获取每条样本中没有被填充的值的长度
+        self.lengths = tf.cast(length, tf.int32) #转化为int型数据
         self.batch_size = tf.shape(self.char_inputs)[0]
         self.num_steps = tf.shape(self.char_inputs)[-1]
 
@@ -224,6 +224,7 @@ class Model(object):
 
     def decode(self, logits, lengths, matrix):
         """
+        对数据进行预测
         :param logits: [batch_size, num_steps, num_tags]float32, logits
         :param lengths: [batch_size]int32, real length of each sequence
         :param matrix: transaction matrix for inference
@@ -256,12 +257,12 @@ class Model(object):
             strings = batch[0]
             tags = batch[-1]
             lengths, scores = self.run_step(sess, False, batch)
-            batch_paths = self.decode(scores, lengths, trans)
+            batch_paths = self.decode(scores, lengths, trans)#数据预测值
             for i in range(len(strings)):
                 result = []
                 string = strings[i][:lengths[i]]
-                gold = iobes_iob([id_to_tag[int(x)] for x in tags[i][:lengths[i]]])
-                pred = iobes_iob([id_to_tag[int(x)] for x in batch_paths[i][:lengths[i]]])
+                gold = iobes_iob([id_to_tag[int(x)] for x in tags[i][:lengths[i]]]) #数据原始值转为iob模式
+                pred = iobes_iob([id_to_tag[int(x)] for x in batch_paths[i][:lengths[i]]])#数据预测值转为iob模式
                 for char, gold, pred in zip(string, gold, pred):
                     result.append(" ".join([char, gold, pred]))
                 results.append(result)
